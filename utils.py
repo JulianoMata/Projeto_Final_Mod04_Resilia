@@ -94,15 +94,18 @@ def localizar_por_empresa_revenda(dataframe, list_nome_empresa_revenda):
     return dataframe.loc[dataframe[Colunas.revenda].isin(list_nome_empresa_revenda)]
 
 
-def renomear_dataframe():
-    pass
+def localizar_pela_bandeira(dataframe, bandeiras):
+    return dataframe.loc[dataframe[Colunas.bandeira].isin(bandeiras)]
+
 
 def medias_valores_produtos_por_semana(df):
-    _medias_valores_produtos_por_semana = df.groupby([Colunas.produto, Colunas.semana]).mean();
-    _medias_valores_produtos_por_semana = _medias_valores_produtos_por_semana.unstack(Colunas.produto)
-    _medias_valores_produtos_por_semana = _medias_valores_produtos_por_semana.droplevel(0, axis=1)
+    _medias_valores_produtos_por_semana = df.groupby(
+        [Colunas.produto, Colunas.semana]).mean()
+    _medias_valores_produtos_por_semana = _medias_valores_produtos_por_semana.unstack(
+        Colunas.produto)
+    _medias_valores_produtos_por_semana = _medias_valores_produtos_por_semana.droplevel(
+        0, axis=1)
     return _medias_valores_produtos_por_semana
-
 
 
 def anotar_eixo_y(figura, eixo_x, valores, precisao, desvio_x, desvio_y, fontsize=12):
@@ -113,18 +116,33 @@ def anotar_eixo_y(figura, eixo_x, valores, precisao, desvio_x, desvio_y, fontsiz
 
 def anotar_valores_grafico(dataframe, figura, precisao, desvio_x, desvio_y, fontsize=12):
     for x, valores in dataframe.iterrows():
-        anotar_eixo_y(figura, x, valores, precisao, desvio_x, desvio_y, fontsize)
-        
+        anotar_eixo_y(figura, x, valores, precisao,
+                      desvio_x, desvio_y, fontsize)
 
-def grafico_valores_produtos_por_semana(df, precisao=2, desvio_x=0.05, desvio_y=0.001, figsize=(16,9), nome='', fontsize=12):
+
+def grafico_valores_produtos_por_semana(df, precisao=2, desvio_x=0.05, desvio_y=0.001, figsize=(16, 9), nome='', fontsize=12):
     fig, ax = plt.subplots()
     color = ['green', 'yellow', 'red', 'blue', 'black']
-    df.plot(style='-o', ax=ax, figsize=figsize, title=nome, color=color).legend(loc='best')
+    df.plot(style='-o', ax=ax, figsize=figsize,
+            title=nome, color=color).legend(loc='best')
     anotar_valores_grafico(df, ax, precisao, desvio_x, desvio_y, fontsize)
     plt.show()
 
 
-    
-def media_por_produto(df):
+def media_por_produto(df, desempilhar=False):
     group_by_keys = df.columns.difference([Colunas.valor_venda]).to_list()
-    return df.groupby(group_by_keys).mean().unstack(Colunas.produto).droplevel(0, axis=1)
+    group = df.groupby(group_by_keys).mean()
+
+    if desempilhar:
+        return group.reset_index()
+
+    return group.unstack(Colunas.produto).droplevel(0, axis=1)
+
+
+def grafico_por_agrupamento(dataframe_grouped, values, index, columns, precisao=2, desvio_x=0.05, desvio_y=0.001, figsize=(16, 9), fontsize=12):
+    for nome, group in dataframe_grouped:
+        pivot = pd.pivot_table(group, values=values,
+                               index=index, columns=columns)
+
+        grafico_valores_produtos_por_semana(
+            pivot, precisao, desvio_x, desvio_y, figsize, nome, fontsize)
